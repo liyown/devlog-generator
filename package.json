@@ -1,0 +1,78 @@
+{
+  "name": "devlog-generator",
+  "version": "1.0.0",
+  "description": "An intelligent development log generator that automatically creates logs from Git commits with AI enhancement support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "devlog": "./bin/devlog"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "postinstall": "node -e \"try { require('./dist/cli.js'); } catch(e) { process.exit(0); }\" && node dist/cli.js init",
+    "start": "node dist/cli.js",
+    "dev": "ts-node src/cli.ts",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/devlog-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/devlog-generator/issues"
+  },
+  "homepage": "https://github.com/yourusername/devlog-generator#readme",
+  "keywords": [
+    "git",
+    "log",
+    "development",
+    "documentation",
+    "ai",
+    "openai",
+    "claude",
+    "gemini",
+    "kimi",
+    "changelog",
+    "devlog"
+  ],
+  "author": "liuyaowen",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "dotenv": "^16.3.1",
+    "inquirer": "^8.2.6",
+    "node-fetch": "^2.7.0",
+    "ora": "^5.4.1",
+    "simple-git": "^3.20.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.10",
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.8.0",
+    "@types/node-fetch": "^2.6.12",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "eslint": "^8.50.0",
+    "husky": "^8.0.3",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.3",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "LICENSE",
+    "README.md"
+  ]
+}
