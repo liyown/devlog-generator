@@ -1,0 +1,35 @@
+# Source
+src/
+tests/
+__tests__/
+*.test.ts
+*.spec.ts
+
+# Config
+tsconfig.json
+jest.config.js
+.eslintrc.js
+.prettierrc
+.editorconfig
+
+# Docs
+docs/
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+coverage/
+.nyc_output/
+
+# Misc
+.DS_Store
+*.log 
