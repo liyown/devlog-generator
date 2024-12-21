@@ -1,14 +1,6 @@
 import { GitCommit } from '../types';
-import simpleGit, { SimpleGit, LogResult } from 'simple-git';
+import simpleGit, { SimpleGit } from 'simple-git';
 import { DevLogError } from './error';
-
-interface GitLogEntry {
-  hash: string;
-  date: string;
-  author_name: string;
-  message: string;
-  refs: string;
-}
 
 export async function getGitLogs(options: {
   maxCommits: number;
@@ -22,26 +14,22 @@ export async function getGitLogs(options: {
       throw new DevLogError('Not a git repository', 'GIT_ERROR');
     }
 
-    // Get commit logs
-    const logOptions = ['--pretty=format:%H|%aI|%an|%s'];
-    if (options.includeTags) {
-      logOptions.push('--tags');
-    }
-
-    const logs: LogResult = await git.log([
-      ...logOptions,
-      `-n ${options.maxCommits}`,
+    // 获取提交日志
+    const logs = await git.log([
+      `--max-count=${options.maxCommits}`,
+      '--date=iso',
     ]);
 
-    // Transform git logs to GitCommit objects
-    return logs.all.map((commit: GitLogEntry) => ({
+    // 获取所有标签
+    const tags = options.includeTags ? await git.tags() : { all: [] };
+
+    // 转换为 GitCommit 对象
+    return logs.all.map(commit => ({
       hash: commit.hash,
       date: commit.date,
       author: commit.author_name,
       message: commit.message,
-      tags: commit.refs
-        ? commit.refs.split(',').map((ref: string) => ref.trim())
-        : [],
+      tags: tags.all.filter(tag => commit.refs?.includes(tag)),
     }));
   } catch (error) {
     throw new DevLogError(

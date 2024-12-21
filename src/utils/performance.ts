@@ -8,49 +8,35 @@ interface PerformanceMetrics {
 }
 
 export class PerformanceMonitor {
-  private metrics: PerformanceMetrics;
+  private startTime: number;
+  private endTime: number = 0;
+  private totalCommits: number;
+  private aiCallTimes: number[];
 
   constructor(totalCommits: number) {
-    this.metrics = {
-      startTime: Date.now(),
-      totalCommits,
-      processedCommits: 0,
-      aiCalls: 0,
-      aiResponseTime: 0,
-    };
+    this.startTime = Date.now();
+    this.totalCommits = totalCommits || 1; // 避免除以零
+    this.aiCallTimes = [];
   }
 
-  incrementProcessedCommits(): void {
-    this.metrics.processedCommits++;
-  }
-
-  recordAICall(responseTime: number): void {
-    this.metrics.aiCalls++;
-    this.metrics.aiResponseTime += responseTime;
+  recordAICall(duration: number): void {
+    this.aiCallTimes.push(duration);
   }
 
   complete(): void {
-    this.metrics.endTime = Date.now();
+    this.endTime = Date.now();
   }
 
-  getProgress(): number {
-    return (this.metrics.processedCommits / this.metrics.totalCommits) * 100;
-  }
-
-  getMetrics(): {
-    totalTime: number;
-    averageAIResponseTime: number;
-    commitsPerSecond: number;
-  } {
-    const totalTime =
-      (this.metrics.endTime || Date.now()) - this.metrics.startTime;
+  getMetrics() {
+    const totalTime = (this.endTime || Date.now()) - this.startTime || 1; // 如果 endTime 未设置，使用当前时间
     return {
       totalTime,
+      commitsPerSecond: (this.totalCommits * 1000) / totalTime,
       averageAIResponseTime:
-        this.metrics.aiCalls > 0
-          ? this.metrics.aiResponseTime / this.metrics.aiCalls
+        this.aiCallTimes.length > 0
+          ? this.aiCallTimes.reduce((a, b) => a + b, 0) /
+            this.aiCallTimes.length
           : 0,
-      commitsPerSecond: (this.metrics.processedCommits / totalTime) * 1000,
     };
   }
 }

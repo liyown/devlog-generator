@@ -1,13 +1,15 @@
 export interface GenerateOptions {
-  format: "markdown" | "json" | "html";
+  format: 'markdown' | 'json' | 'html';
   outputDir: string;
   maxCommits: string;
   includeTags: boolean;
+  groupSize?: number;
+  groupByTag?: boolean;
 }
 
 export interface Config {
   useAI: boolean;
-  aiInterface: "openai" | "claude" | "gemini" | "kimi";
+  aiInterface: 'openai' | 'claude' | 'gemini' | 'kimi';
   openai?: {
     apiKey: string;
     model: string;
@@ -25,11 +27,8 @@ export interface Config {
     apiKey: string;
     model: string;
   };
-  logFormat: "markdown" | "json" | "html";
-  gitLogOptions: {
-    maxCommits: number;
-    includeTags: boolean;
-  };
+  logFormat: 'markdown' | 'json' | 'html';
+  gitLogOptions: GitLogOptions;
   outputDirectory: string;
 }
 
@@ -45,4 +44,11 @@ export interface AIResponse {
   success: boolean;
   content: string;
   error?: string;
+}
+
+export interface GitLogOptions {
+  maxCommits: number;
+  includeTags: boolean;
+  groupSize: number;
+  groupByTag: boolean;
 }

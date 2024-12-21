@@ -1,20 +1,20 @@
-import fs from "fs";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
 
 export async function saveLog(
   content: string,
   format: string,
-  outputDir: string
+  outputDir: string,
+  fileName?: string
 ): Promise<string> {
   // Create output directory if it doesn't exist
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const fileName = `devlog-${timestamp}.${format}`;
-  const filePath = path.join(outputDir, fileName);
+  const name = fileName || 'devlog';
+  const filePath = path.join(outputDir, `${name}.${format}`);
 
-  await fs.promises.writeFile(filePath, content, "utf-8");
+  fs.writeFileSync(filePath, content);
   return filePath;
 }
