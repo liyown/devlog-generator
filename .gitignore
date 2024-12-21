@@ -1,7 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
-yarn.lock
 
 # Build
 dist/
@@ -31,6 +29,9 @@ yarn-error.log*
 
 # Cache
 .devlog-cache.json
+
+# Config
+devlog.config.json
 
 # OS
 .DS_Store
