@@ -5,139 +5,65 @@ import { Config } from '../types';
 import { defaultConfig } from '../templates/defaultConfig';
 import { DevLogError } from '../utils/error';
 import chalk from 'chalk';
-import ora from 'ora';
 
-const CONFIG_LOCATIONS = {
-  PROJECT: 'Project directory (devlog.config.json)',
-  HOME: 'User home directory (~/.config/devlog-generator/config.json)',
-  CUSTOM: 'Custom location',
-};
-
-const AI_PROVIDERS = {
-  OPENAI: 'OpenAI',
-  CLAUDE: 'Claude',
-  GEMINI: 'Gemini',
-  KIMI: 'Kimi',
-};
-
-const LOG_STYLES = {
-  FORMAL: 'Generate formal and technical logs',
-  CONCISE: 'Generate concise and informal logs',
-  DETAILED: 'Generate detailed and explanatory logs',
-  HUMOROUS: 'Generate humorous logs',
-  CUSTOM: 'Custom prompt',
-};
+// 添加类型定义
+type LogFormat = 'markdown' | 'json' | 'html';
+type AIProvider = 'OpenAI' | 'Claude' | 'Gemini' | 'Kimi';
+type LogStyle = 'Formal' | 'Concise' | 'Detailed' | 'Custom';
 
 export async function init(): Promise<void> {
-  const spinner = ora('Initializing configuration...').start();
+  // 在函数开始时设置环境变量
+  process.env.NODE_NO_WARNINGS = '1';
 
   try {
-    // 1. 配置文件位置
-    const { configLocation } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'configLocation',
-        message: 'Where would you like to save the configuration file?',
-        default: CONFIG_LOCATIONS.PROJECT,
-        choices: Object.values(CONFIG_LOCATIONS),
-      },
-    ]);
+    console.log(chalk.cyan('Initializing configuration...\n'));
 
-    let configPath = 'devlog.config.json';
-    if (configLocation === CONFIG_LOCATIONS.HOME) {
-      configPath = path.join(
-        process.env.HOME || '~',
-        '.config',
-        'devlog-generator',
-        'config.json'
-      );
-    } else if (configLocation === CONFIG_LOCATIONS.CUSTOM) {
-      const { customPath } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'customPath',
-          message: 'Enter the path for the configuration file:',
-        },
-      ]);
-      configPath = customPath;
-    }
+    // 1. 配置文件路径
+    const configPath = 'devlog.config.json';
 
-    // 2. AI 启用选项
-    const { useAI } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'useAI',
-        message: 'Enable AI for log generation?',
-        default: false,
-      },
-    ]);
+    // 2. AI 配置
+    const useAI = await confirmPrompt('Enable AI for log generation?');
 
     let aiConfig = {};
     if (useAI) {
-      // 3. AI 提供商配置
-      const { aiProvider } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'aiProvider',
-          message: 'Choose AI provider:',
-          choices: Object.values(AI_PROVIDERS),
-        },
+      // 选择 AI 提供商
+      const aiProvider = await selectPrompt<AIProvider>('Choose AI provider:', [
+        'OpenAI',
+        'Claude',
+        'Gemini',
+        'Kimi',
       ]);
 
-      const { apiKey } = await inquirer.prompt([
-        {
-          type: 'password',
-          name: 'apiKey',
-          message: `Enter your ${aiProvider} API Key:`,
-        },
-      ]);
+      // 输入 API Key
+      const apiKey = await inputPrompt(
+        `Enter your ${aiProvider} API Key:`,
+        true
+      );
 
-      const providerKey = aiProvider.toLowerCase() as
-        | 'openai'
-        | 'claude'
-        | 'gemini'
-        | 'kimi';
-      const defaultModel =
-        defaultConfig[providerKey] && 'model' in defaultConfig[providerKey]
-          ? (defaultConfig[providerKey] as { model: string }).model
-          : '';
+      // 选择模型
+      const model = await inputPrompt(
+        `Enter your ${aiProvider} model:`,
+        false,
+        getDefaultModel(aiProvider)
+      );
 
-      const { model } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'model',
-          message: `Enter your ${aiProvider} model:`,
-          default: defaultModel,
-        },
-      ]);
-
-      // 4. 日志风格
-      const { logStyle } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'logStyle',
-          message: 'Choose log style for AI generation:',
-          choices: Object.values(LOG_STYLES),
-        },
+      // 选择日志风格
+      const logStyle = await selectPrompt<LogStyle>('Choose log style:', [
+        'Formal',
+        'Concise',
+        'Detailed',
+        'Custom',
       ]);
 
       const stylePrompt =
-        logStyle === LOG_STYLES.CUSTOM
-          ? (
-              await inquirer.prompt([
-                {
-                  type: 'input',
-                  name: 'customPrompt',
-                  message: 'Enter your custom prompt:',
-                },
-              ])
-            ).customPrompt
-          : logStyle;
+        logStyle === 'Custom'
+          ? await inputPrompt('Enter your custom prompt:', false)
+          : getDefaultPrompt(logStyle);
 
       aiConfig = {
         useAI: true,
-        aiInterface: aiProvider.toLowerCase() as Config['aiInterface'],
-        [aiProvider.toLowerCase() as keyof Config]: {
+        aiInterface: aiProvider.toLowerCase(),
+        [aiProvider.toLowerCase()]: {
           apiKey,
           model,
           stylePrompt,
@@ -145,26 +71,19 @@ export async function init(): Promise<void> {
       };
     }
 
-    // 5. 日志格式
-    const { logFormat } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'logFormat',
-        message: 'Select the log output format:',
-        choices: ['markdown', 'json', 'html'],
-        default: 'html',
-      },
-    ]);
+    // 3. 日志格式
+    const logFormat = await selectPrompt<LogFormat>(
+      'Select log output format:',
+      ['markdown', 'json', 'html'],
+      'html'
+    );
 
-    // 6. 输出目录
-    const { outputDir } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'outputDirectory',
-        message: 'Enter the output directory:',
-        default: './public',
-      },
-    ]);
+    // 4. 输出目录
+    const outputDir = await inputPrompt(
+      'Enter output directory:',
+      false,
+      './public'
+    );
 
     // 创建配置
     const config: Config = {
@@ -174,18 +93,11 @@ export async function init(): Promise<void> {
       outputDirectory: outputDir,
     };
 
-    // 确保目录存在
-    const configDir = path.dirname(configPath);
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
-    }
-
     // 保存配置
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-
-    spinner.succeed(chalk.green(`Configuration saved to: ${configPath}`));
+    console.log(chalk.green(`\nConfiguration saved to: ${configPath}`));
   } catch (error) {
-    spinner.fail(chalk.red('Failed to initialize configuration'));
+    console.error(chalk.red('\nFailed to initialize configuration'));
     if (error instanceof DevLogError) {
       console.error(chalk.red(`Error [${error.code}]: ${error.message}`));
     } else {
@@ -193,4 +105,71 @@ export async function init(): Promise<void> {
     }
     process.exit(1);
   }
+}
+
+// 辅助函数
+async function confirmPrompt(message: string): Promise<boolean> {
+  const { value } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'value',
+      message,
+      default: false,
+      prefix: ' ',
+      suffix: ' ',
+    },
+  ]);
+  return value;
+}
+
+async function selectPrompt<T extends string>(
+  message: string,
+  choices: T[],
+  defaultValue?: T
+): Promise<T> {
+  const { value } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'value',
+      message,
+      choices,
+      default: defaultValue,
+    },
+  ]);
+  return value;
+}
+
+async function inputPrompt(
+  message: string,
+  isPassword: boolean,
+  defaultValue?: string
+): Promise<string> {
+  const { value } = await inquirer.prompt([
+    {
+      type: isPassword ? 'password' : 'input',
+      name: 'value',
+      message,
+      default: defaultValue,
+    },
+  ]);
+  return value;
+}
+
+function getDefaultModel(provider: AIProvider): string {
+  const models: Record<AIProvider, string> = {
+    OpenAI: 'gpt-3.5-turbo',
+    Claude: 'claude-3-opus-20240229',
+    Gemini: 'gemini-pro',
+    Kimi: 'moonshot-v1-128k',
+  };
+  return models[provider];
+}
+
+function getDefaultPrompt(style: Exclude<LogStyle, 'Custom'>): string {
+  const prompts: Record<Exclude<LogStyle, 'Custom'>, string> = {
+    Formal: 'Generate formal and technical logs',
+    Concise: 'Generate concise and clear logs',
+    Detailed: 'Generate detailed and comprehensive logs',
+  };
+  return prompts[style];
 }
