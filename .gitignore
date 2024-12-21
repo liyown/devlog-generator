@@ -36,3 +36,9 @@ devlog.config.json
 # OS
 .DS_Store
 Thumbs.db 
+
+# 添加以下内容到 .gitignore
+.devlog-cache.json
+public/
+dist/
+coverage/
