@@ -48,9 +48,13 @@ devlog generate
 
 ### 5. 输出样例
 
-![markdown](https://github.com/liyown/devlog-generator/assets/markdown.png)
+**Markdown**
 
-![html](https://github.com/liyown/devlog-generator/assets/html.png)
+![markdown](https://oss.liuyaowen.cn/images/markdown.png)
+
+**HTML**
+
+![html](https://oss.liuyaowen.cn/images/html.png)
 
 ## 社区支持
 
