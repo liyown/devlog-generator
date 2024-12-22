@@ -64,20 +64,23 @@ function generateJSON(commits: GitCommit[], enhancedLog?: string): string {
       ? startDate.toLocaleDateString()
       : `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
 
-  let devlog = '';
+  let logBlock = {};
 
   if (enhancedLog) {
-    devlog = enhancedLog;
+    logBlock = {
+      dateRange,
+      devlog: enhancedLog,
+    };
   } else {
-    commits.forEach(commit => {
-      devlog += `- **${getCommitType(commit.message)}**: ${getCommitMessage(commit.message)}\n`;
-    });
+    logBlock = commits.map(commit => ({
+      hash: commit.hash,
+      date: commit.date,
+      author: commit.author,
+      type: getCommitType(commit.message),
+      message: getCommitMessage(commit.message),
+      tags: commit.tags || [],
+    }));
   }
-
-  const logBlock = {
-    dateRange,
-    devlog: devlog,
-  };
 
   return JSON.stringify(logBlock, null, 2);
 }

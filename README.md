@@ -1,4 +1,4 @@
-# devlog-generator
+<h1 align="center">devlog-generator</h1>
 
 <div align="center">
 
@@ -13,9 +13,6 @@
 [![JSON](https://img.shields.io/badge/JSON-000000?style=flat-square&logo=json&logoColor=white)](https://www.json.org/)
 
 <h3>🚀 将 Git 提交记录转化为优雅的开发日志，支持 AI 增强和多种输出格式</h3>
-
-[English](./README.en.md) | 简体中文
-
 </div>
 
 ## 📖 简介
@@ -77,25 +74,6 @@ devlog init
 
 ```bash
 devlog generate
-```
-
-### 进阶使用
-
-```bash
-# 指定时间范围生成
-devlog generate --from 2024-01-01 --to 2024-01-31
-
-# 指定输出格式
-devlog generate --format html
-
-# 使用 AI 增强
-devlog generate --use-ai --ai-interface gemini
-
-# 自定义输出目录
-devlog generate --output-dir ./docs/changelog
-
-# 组合使用
-devlog generate --from 2024-01-01 --to 2024-01-31 --format html --output-dir ./docs/changelog
 ```
 
 ## 📝 输出示例

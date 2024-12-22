@@ -52,12 +52,14 @@ export async function generate(): Promise<void> {
         // 更新进度
         spinner.text = `Processing group ${index + 1}/${totalGroups}...`;
 
-        try {
-          // 先生成原始日志
-          let groupLog = await generateLogs(group, 'plain'); // 使用markdown格式作为中间格式
+        var groupLog = undefined;
 
+        try {
           // 如果启用了AI，使用AI增强日志
           if (finalOptions.useAI) {
+            // 先生成原始日志
+            let groupLog = await generateLogs(group, 'plain'); // 使用markdown格式作为中间格式
+
             spinner.text = `Enhancing group ${index + 1}/${totalGroups} with AI...`;
             const startTime = Date.now();
             try {
