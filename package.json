@@ -9,7 +9,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "install": "npm run build && npm link",
     "prepublishOnly": "npm run build",
     "start": "node dist/cli.js",
     "dev": "cross-env NODE_NO_WARNINGS=1 ts-node src/cli.ts",
