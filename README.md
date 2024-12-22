@@ -42,23 +42,38 @@ devlog generate
 
 ## 配置
 
-配置文件 `devlog.config.json` 示例：
+### 配置文件
+
+默认配置文件 `devlog.config.json` 示例：
 
 ```json
 {
   "useAI": true,
-  "aiInterface": "openai",
+  "aiInterface": "gemini",
   "openai": {
-    "apiKey": "your-api-key",
-    "model": "gpt-4",
+    "apiKey": "",
+    "model": "gpt-3.5-turbo",
     "stylePrompt": "Generate formal and technical logs"
   },
-  "logFormat": "html",
-  "outputDirectory": "./public",
+  "claude": {
+    "apiKey": "",
+    "model": "claude-3-opus-20240229"
+  },
+  "gemini": {
+    "apiKey": "your-gemini-api-key",
+    "model": "gemini-1.5-flash"
+  },
+  "kimi": {
+    "apiKey": "",
+    "model": "moonshot-v1-128k"
+  },
+  "logFormat": "markdown",
   "gitLogOptions": {
     "maxCommits": 50,
-    "includeTags": false
-  }
+    "groupSize": 5,
+    "groupByTag": false
+  },
+  "outputDirectory": "./public"
 }
 ```
 
@@ -75,65 +90,67 @@ devlog generate
 
 - `gitLogOptions`:
   - `maxCommits`: (number) 最大提交数量
-  - `includeTags`: (boolean) 是否包含标签信息
+  - `groupSize`: (number) 分组大小，每组包含的分组单位
+  - `groupByTag`: (boolean) 是否按标签分组
 
 #### AI 服务配置
 
+支持的 AI 服务及其配置选项：
+
 ##### OpenAI
 
-- `openai`:
-  - `apiKey`: OpenAI API 密钥
-  - `model`: 可选值：
-    - "gpt-4"
-    - "gpt-4-turbo-preview"
-    - "gpt-3.5-turbo"
-  - `stylePrompt`: 自定义提示词
+```json
+{
+  "openai": {
+    "apiKey": "",
+    "model": "gpt-3.5-turbo",
+    "stylePrompt": "Generate formal and technical logs"
+  }
+}
+```
 
 ##### Claude
 
-- `claude`:
-  - `apiKey`: Claude API 密钥
-  - `model`: 可选值：
-    - "claude-3-opus-20240229"
-    - "claude-3-sonnet-20240229"
-    - "claude-3-haiku-20240307"
+```json
+{
+  "claude": {
+    "apiKey": "",
+    "model": "claude-3-opus-20240229"
+  }
+}
+```
 
 ##### Gemini
 
-- `gemini`:
-  - `apiKey`: Gemini API 密钥
-  - `model`: 可选值：
-    - "gemini-pro"
-    - "gemini-pro-vision"
+```json
+{
+  "gemini": {
+    "apiKey": "your-gemini-api-key",
+    "model": "gemini-1.5-flash"
+  }
+}
+```
 
 ##### Kimi
 
-- `kimi`:
-  - `apiKey`: Kimi API 密钥
-  - `model`: 可选值：
-    - "moonshot-v1-8k"
-    - "moonshot-v1-32k"
-    - "moonshot-v1-128k"
+```json
+{
+  "kimi": {
+    "apiKey": "",
+    "model": "moonshot-v1-128k"
+  }
+}
+```
 
-#### 日志样式
+### 环境变量
 
-可以通过 `stylePrompt` 自定义生成的日志风格：
-
-- "Generate formal and technical logs"（默认）
-- "Generate concise and clear logs"
-- "Generate detailed and comprehensive logs"
-- "Generate logs with examples and explanations"
-- 或者自定义提示词
-
-## 环境变量
-
-也可以通过环境变量配置：
+支持通过环境变量进行配置：
 
 ```env
 USE_AI=true
-AI_INTERFACE=openai
-OPENAI_API_KEY=your-api-key
-LOG_FORMAT=html
+AI_INTERFACE=gemini
+GEMINI_API_KEY=your-gemini-api-key
+LOG_FORMAT=markdown
 OUTPUT_DIRECTORY=./public
 ```
 

@@ -25,22 +25,17 @@ export async function getGitLogs(options: {
       tags: [] as string[],
     }));
 
-    // 如果需要包含标签
-    if (options.includeTags) {
-      const tags = await git.tags();
-      for (const tag of tags.all) {
-        try {
-          const tagCommit = await git.revparse([tag]);
-          const commit = commits.find(c => c.hash === tagCommit);
-          if (commit) {
-            if (!commit.tags) {
-              commit.tags = [];
-            }
-            commit.tags.push(tag);
-          }
-        } catch (error) {
-          console.warn(`Failed to get commit for tag ${tag}:`, error);
+    // 获取所有标签信息
+    const tags = await git.tags();
+    for (const tag of tags.all) {
+      try {
+        const tagCommit = await git.revparse([tag]);
+        const commit = commits.find(c => c.hash === tagCommit);
+        if (commit) {
+          commit.tags.push(tag);
         }
+      } catch (error) {
+        console.warn(`Failed to get commit for tag ${tag}:`, error);
       }
     }
 
