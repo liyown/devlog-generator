@@ -52,3 +52,13 @@ export interface GitLogOptions {
   groupSize: number;
   groupByTag: boolean;
 }
+
+interface CacheEntry {
+  timestamp: number;
+  content: string;
+  hash: string;
+}
+
+interface CacheData {
+  [key: string]: CacheEntry;
+}

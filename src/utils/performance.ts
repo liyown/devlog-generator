@@ -39,4 +39,8 @@ export class PerformanceMonitor {
           : 0,
     };
   }
+
+  setTotalCommits(count: number): void {
+    this.totalCommits = count || 1; // 避免除以零
+  }
 }

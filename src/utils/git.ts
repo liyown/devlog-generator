@@ -6,31 +6,45 @@ export async function getGitLogs(options: {
   maxCommits: number;
   includeTags: boolean;
 }): Promise<GitCommit[]> {
-  try {
-    const git = simpleGit();
-    const isRepo = await git.checkIsRepo();
+  const git = simpleGit();
 
+  try {
+    const isRepo = await git.checkIsRepo();
     if (!isRepo) {
       throw new DevLogError('Not a git repository', 'GIT_ERROR');
     }
 
-    // 获取提交日志
-    const logs = await git.log([
-      `--max-count=${options.maxCommits}`,
-      '--date=iso',
-    ]);
+    // 获取指定数量的提交
+    const logs = await git.log(['--date=iso', `-n ${options.maxCommits}`]);
 
-    // 获取所有标签
-    const tags = options.includeTags ? await git.tags() : { all: [] };
-
-    // 转换为 GitCommit 对象
-    return logs.all.map(commit => ({
-      hash: commit.hash,
-      date: commit.date,
-      author: commit.author_name,
-      message: commit.message,
-      tags: tags.all.filter(tag => commit.refs?.includes(tag)),
+    const commits = logs.all.map(log => ({
+      hash: log.hash,
+      date: log.date,
+      author: log.author_name,
+      message: log.message,
+      tags: [] as string[],
     }));
+
+    // 如果需要包含标签
+    if (options.includeTags) {
+      const tags = await git.tags();
+      for (const tag of tags.all) {
+        try {
+          const tagCommit = await git.revparse([tag]);
+          const commit = commits.find(c => c.hash === tagCommit);
+          if (commit) {
+            if (!commit.tags) {
+              commit.tags = [];
+            }
+            commit.tags.push(tag);
+          }
+        } catch (error) {
+          console.warn(`Failed to get commit for tag ${tag}:`, error);
+        }
+      }
+    }
+
+    return commits;
   } catch (error) {
     throw new DevLogError(
       `Failed to get git logs: ${error}`,

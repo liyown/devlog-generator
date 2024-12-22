@@ -4,21 +4,28 @@ import path from 'path';
 
 export async function generateLogs(
   commits: GitCommit[],
-  format: string
+  format: string,
+  enhancedLog?: string
 ): Promise<string> {
   switch (format) {
     case 'markdown':
-      return generateMarkdown(commits);
+      return generateMarkdown(commits, enhancedLog);
     case 'json':
-      return generateJSON(commits);
+      return generateJSON(commits, enhancedLog);
     case 'html':
-      return generateHtmlLog(commits);
+      return generateHtmlLog(commits, enhancedLog);
+    case 'plain':
+      return generatePlainLog(commits, enhancedLog);
     default:
       throw new Error(`Unsupported format: ${format}`);
   }
 }
 
-function generateMarkdown(commits: GitCommit[]): string {
+function generatePlainLog(commits: GitCommit[], enhancedLog?: string): string {
+  return commits.map(commit => `${commit.message}`).join('\n');
+}
+
+function generateMarkdown(commits: GitCommit[], enhancedLog?: string): string {
   // 每组提交作为一个日志块
   let markdown = '';
 
@@ -33,19 +40,22 @@ function generateMarkdown(commits: GitCommit[]): string {
   // 添加日志块标题
   markdown += `## Development Log (${dateRange})\n\n`;
 
-  // 添加提交信息
-  commits.forEach(commit => {
-    markdown += `- **${getCommitType(commit.message)}**: ${getCommitMessage(commit.message)}\n`;
-    if (commit.tags?.length) {
-      markdown += `  - Tags: ${commit.tags.join(', ')}\n`;
-    }
-  });
+  if (enhancedLog) {
+    markdown += enhancedLog;
+  } else {
+    commits.forEach(commit => {
+      markdown += `- **${getCommitType(commit.message)}**: ${getCommitMessage(commit.message)}\n`;
+      if (commit.tags?.length) {
+        markdown += `  - Tags: ${commit.tags.join(', ')}\n`;
+      }
+    });
+  }
 
   markdown += '\n---\n';
   return markdown;
 }
 
-function generateJSON(commits: GitCommit[]): string {
+function generateJSON(commits: GitCommit[], enhancedLog?: string): string {
   // 获取组的时间范围
   const startDate = new Date(commits[commits.length - 1].date);
   const endDate = new Date(commits[0].date);
@@ -54,21 +64,29 @@ function generateJSON(commits: GitCommit[]): string {
       ? startDate.toLocaleDateString()
       : `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
 
-  // 构建日志块
+  let devlog = '';
+
+  if (enhancedLog) {
+    devlog = enhancedLog;
+  } else {
+    commits.forEach(commit => {
+      devlog += `- **${getCommitType(commit.message)}**: ${getCommitMessage(commit.message)}\n`;
+    });
+  }
+
   const logBlock = {
     dateRange,
-    commits: commits.map(commit => ({
-      type: getCommitType(commit.message),
-      message: getCommitMessage(commit.message),
-      tags: commit.tags || [],
-    })),
+    devlog: devlog,
   };
 
   return JSON.stringify(logBlock, null, 2);
 }
 
-function generateHtmlLog(commits: GitCommit[]): string {
-  // 获取组的时间范围
+function generateHtmlLog(commits: GitCommit[], enhancedLog?: string): string {
+  if (commits.length === 0) {
+    return '<div class="log-block"><h2>No commits found</h2></div>';
+  }
+
   const startDate = new Date(commits[commits.length - 1].date);
   const endDate = new Date(commits[0].date);
   const dateRange =
@@ -76,27 +94,67 @@ function generateHtmlLog(commits: GitCommit[]): string {
       ? startDate.toLocaleDateString()
       : `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
 
-  const commitHtml = commits
-    .map(
-      commit => `
-      <li class="commit">
-        <span class="type">${getCommitType(commit.message)}</span>
-        <span class="message">${getCommitMessage(commit.message)}</span>
-        ${commit.tags?.length ? `<div class="tags">${commit.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
-      </li>
-    `
-    )
-    .join('\n');
-
-  return `
+  let blockHtml = `
     <div class="log-block">
-      <h2>Development Log (${dateRange})</h2>
-      <ul class="commit-list">
-        ${commitHtml}
-      </ul>
-      <hr>
-    </div>
-  `;
+      <h2>Development Log (${dateRange})</h2>`;
+
+  if (enhancedLog) {
+    blockHtml += `
+      <div class="enhanced-log">
+        ${enhancedLog}
+      </div>`;
+  } else {
+    blockHtml += commits
+      .map(
+        commit => `
+          <article class="commit">
+            <div class="commit-header">
+              <div class="commit-type ${getCommitType(commit.message).toLowerCase()}">
+                ${getCommitType(commit.message)}
+              </div>
+              <div class="commit-meta">
+                <span class="hash" title="Commit Hash">
+                  <svg class="icon" viewBox="0 0 16 16" width="16" height="16">
+                    <path fill="currentColor" d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"/>
+                  </svg>
+                  ${commit.hash.slice(0, 7)}
+                </span>
+                <span class="author" title="Author">
+                  <svg class="icon" viewBox="0 0 16 16" width="16" height="16">
+                    <path fill="currentColor" d="M8 8.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm4.25 4.5H3.75a.75.75 0 010-1.5h8.5a.75.75 0 010 1.5z"/>
+                  </svg>
+                  ${commit.author}
+                </span>
+                <time class="date" title="Date" datetime="${commit.date}">
+                  <svg class="icon" viewBox="0 0 16 16" width="16" height="16">
+                    <path fill="currentColor" d="M4.75 0a.75.75 0 01.75.75V2h5V.75a.75.75 0 011.5 0V2h1.25c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0113.25 16H2.75A1.75 1.75 0 011 14.25V3.75C1 2.784 1.784 2 2.75 2H4V.75A.75.75 0 014.75 0zm0 3.5h8.5a.25.25 0 01.25.25V6h-11V3.75a.25.25 0 01.25-.25h2zm-2.25 4v6.75c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25V7.5h-11z"/>
+                  </svg>
+                  ${new Date(commit.date).toLocaleString()}
+                </time>
+              </div>
+            </div>
+            <div class="commit-content">
+              <p class="commit-message">${getCommitMessage(commit.message)}</p>
+              ${
+                commit.tags && commit.tags.length > 0
+                  ? `<div class="commit-tags">
+                      ${commit.tags
+                        .map(tag => `<span class="tag">${tag}</span>`)
+                        .join('')}
+                    </div>`
+                  : ''
+              }
+            </div>
+          </article>
+        `
+      )
+      .join('\n');
+  }
+
+  blockHtml += `
+    </div>`;
+
+  return blockHtml;
 }
 
 // 辅助函数

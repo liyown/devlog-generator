@@ -4,10 +4,10 @@ import { generateLogs } from '../services/logGenerator';
 import { enhanceWithAI } from '../services/aiEnhancer';
 import { saveLog } from '../utils/fileWriter';
 import { DevLogError } from '../utils/error';
+import { GitCommit } from '../types';
 import chalk from 'chalk';
 import ora from 'ora';
 import { PerformanceMonitor } from '../utils/performance';
-import { LogCache } from '../utils/cache';
 
 interface BatchOptions {
   startDate?: string;
@@ -19,7 +19,6 @@ interface BatchOptions {
 
 export async function batchGenerate(options: BatchOptions): Promise<void> {
   const spinner = ora('Loading configuration...').start();
-  const cache = new LogCache();
   let monitor: PerformanceMonitor;
 
   try {
@@ -33,7 +32,7 @@ export async function batchGenerate(options: BatchOptions): Promise<void> {
     });
 
     // Filter commits based on date range and tags
-    const filteredCommits = commits.filter(commit => {
+    const filteredCommits = commits.filter((commit: GitCommit) => {
       const commitDate = new Date(commit.date);
       const startDate = options.startDate ? new Date(options.startDate) : null;
       const endDate = options.endDate ? new Date(options.endDate) : null;
@@ -44,7 +43,7 @@ export async function batchGenerate(options: BatchOptions): Promise<void> {
 
       // Check tags
       if (options.tags && options.tags.length > 0) {
-        return commit.tags?.some(tag => options.tags?.includes(tag));
+        return commit.tags?.some((tag: string) => options.tags?.includes(tag));
       }
 
       return true;
@@ -56,23 +55,6 @@ export async function batchGenerate(options: BatchOptions): Promise<void> {
     }
 
     monitor = new PerformanceMonitor(filteredCommits.length);
-
-    // Check cache first
-    const cachedLogs = cache.get(
-      filteredCommits,
-      options.format || config.logFormat
-    );
-    if (cachedLogs) {
-      spinner.succeed(chalk.green('Logs retrieved from cache'));
-      const outputPath = await saveLog(
-        cachedLogs,
-        options.format || config.logFormat,
-        options.outputDir || config.outputDirectory
-      );
-      console.log(chalk.blue(`Output saved to: ${outputPath}`));
-      return;
-    }
-
     spinner.text = 'Generating logs...';
 
     // Generate logs
@@ -95,20 +77,6 @@ export async function batchGenerate(options: BatchOptions): Promise<void> {
         console.error(error);
       }
     }
-    // Cache the generated logs
-    for (const commit of filteredCommits) {
-      const commitLog = await generateLogs(
-        [commit],
-        options.format || config.logFormat
-      );
-      cache.set(commit, commitLog);
-    }
-
-    // 合并所有日志
-    logs = filteredCommits
-      .map(commit => cache.get([commit], options.format || config.logFormat))
-      .filter(Boolean)
-      .join('\n');
 
     // Save logs
     spinner.text = 'Saving logs...';

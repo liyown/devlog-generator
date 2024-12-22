@@ -1,6 +1,7 @@
-import { Config } from "../types";
-import { DevLogError } from "../utils/error";
-import fetch from "node-fetch";
+import { log } from 'console';
+import { Config } from '../types';
+import { DevLogError } from '../utils/error';
+import fetch from 'node-fetch';
 
 export async function enhanceWithAI(
   logs: string,
@@ -8,18 +9,18 @@ export async function enhanceWithAI(
 ): Promise<string> {
   try {
     switch (config.aiInterface) {
-      case "openai":
+      case 'openai':
         return await enhanceWithOpenAI(logs, config);
-      case "claude":
+      case 'claude':
         return await enhanceWithClaude(logs, config);
-      case "gemini":
+      case 'gemini':
         return await enhanceWithGemini(logs, config);
-      case "kimi":
+      case 'kimi':
         return await enhanceWithKimi(logs, config);
       default:
         throw new DevLogError(
           `Unsupported AI interface: ${config.aiInterface}`,
-          "INVALID_AI_INTERFACE"
+          'INVALID_AI_INTERFACE'
         );
     }
   } catch (error) {
@@ -27,8 +28,8 @@ export async function enhanceWithAI(
       throw error;
     }
     throw new DevLogError(
-      "Failed to enhance logs with AI",
-      "AI_ENHANCEMENT_ERROR",
+      'Failed to enhance logs with AI',
+      'AI_ENHANCEMENT_ERROR',
       error
     );
   }
@@ -39,26 +40,26 @@ async function enhanceWithOpenAI(
   config: Config
 ): Promise<string> {
   if (!config.openai?.apiKey) {
-    throw new DevLogError("OpenAI API key not configured", "MISSING_API_KEY");
+    throw new DevLogError('OpenAI API key not configured', 'MISSING_API_KEY');
   }
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${config.openai.apiKey}`,
       },
       body: JSON.stringify({
         model: config.openai.model,
         messages: [
           {
-            role: "system",
+            role: 'system',
             content:
-              config.openai.stylePrompt || "Generate formal and technical logs",
+              config.openai.stylePrompt || 'Generate formal and technical logs',
           },
           {
-            role: "user",
+            role: 'user',
             content: `Enhance the following development log:\n\n${logs}`,
           },
         ],
@@ -72,7 +73,7 @@ async function enhanceWithOpenAI(
     const data = await response.json();
     return data.choices[0]?.message?.content || logs;
   } catch (error) {
-    throw new DevLogError("OpenAI API call failed", "API_ERROR", error);
+    throw new DevLogError('OpenAI API call failed', 'API_ERROR', error);
   }
 }
 
@@ -81,27 +82,27 @@ async function enhanceWithClaude(
   config: Config
 ): Promise<string> {
   if (!config.claude?.apiKey) {
-    throw new DevLogError("Claude API key not configured", "MISSING_API_KEY");
+    throw new DevLogError('Claude API key not configured', 'MISSING_API_KEY');
   }
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": config.claude.apiKey,
-        "anthropic-version": "2023-06-01",
+        'Content-Type': 'application/json',
+        'x-api-key': config.claude.apiKey,
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model: config.claude.model,
         max_tokens: 1024,
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `Enhance the following development log:\n\n${logs}`,
           },
         ],
-        system: "Generate formal and technical logs",
+        system: 'Generate formal and technical logs',
       }),
     });
 
@@ -112,7 +113,7 @@ async function enhanceWithClaude(
     const data = await response.json();
     return data.content[0]?.text || logs;
   } catch (error) {
-    throw new DevLogError("Claude API call failed", "API_ERROR", error);
+    throw new DevLogError('Claude API call failed', 'API_ERROR', error);
   }
 }
 
@@ -121,65 +122,65 @@ async function enhanceWithGemini(
   config: Config
 ): Promise<string> {
   if (!config.gemini?.apiKey) {
-    throw new DevLogError("Gemini API key not configured", "MISSING_API_KEY");
+    throw new DevLogError('Gemini API key not configured', 'MISSING_API_KEY');
   }
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${config.gemini.model}:generateContent?key=${config.gemini.apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Enhance the following development log:\n\n${logs}`,
-                },
-              ],
-            },
-          ],
-        }),
+  console.log('当前组的日志：', logs);
+
+  // Mock implementation that returns enhanced logs
+  const enhancedLogs = logs
+    .split('\n')
+    .map(line => {
+      if (line.includes('feat')) {
+        return line.replace('feat', 'Feature:') + ' - Added new functionality';
       }
-    );
+      if (line.includes('fix')) {
+        return line.replace('fix', 'Bugfix:') + ' - Resolved issue';
+      }
+      if (line.includes('docs')) {
+        return line.replace('docs', 'Documentation:') + ' - Updated docs';
+      }
+      if (line.includes('chore')) {
+        return line.replace('chore', 'Maintenance:') + ' - General updates';
+      }
+      if (line.includes('refactor')) {
+        return (
+          line.replace('refactor', 'Code Improvement:') +
+          ' - Enhanced code structure'
+        );
+      }
+      return line;
+    })
+    .join('\n');
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  console.log('增强后的日志：', enhancedLogs);
 
-    const data = await response.json();
-    return data.candidates[0]?.content?.parts[0]?.text || logs;
-  } catch (error) {
-    throw new DevLogError("Gemini API call failed", "API_ERROR", error);
-  }
+  return enhancedLogs;
 }
 
 async function enhanceWithKimi(logs: string, config: Config): Promise<string> {
   if (!config.kimi?.apiKey) {
-    throw new DevLogError("Kimi API key not configured", "MISSING_API_KEY");
+    throw new DevLogError('Kimi API key not configured', 'MISSING_API_KEY');
   }
 
   try {
     const response = await fetch(
-      "https://api.moonshot.cn/v1/chat/completions",
+      'https://api.moonshot.cn/v1/chat/completions',
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${config.kimi.apiKey}`,
         },
         body: JSON.stringify({
           model: config.kimi.model,
           messages: [
             {
-              role: "system",
-              content: "Generate formal and technical logs",
+              role: 'system',
+              content: 'Generate formal and technical logs',
             },
             {
-              role: "user",
+              role: 'user',
               content: `Enhance the following development log:\n\n${logs}`,
             },
           ],
@@ -193,12 +194,12 @@ async function enhanceWithKimi(logs: string, config: Config): Promise<string> {
 
     const data = await response.json();
     if (!data.choices?.[0]?.message?.content) {
-      throw new Error("Invalid response format from Kimi API");
+      throw new Error('Invalid response format from Kimi API');
     }
 
     return data.choices[0].message.content;
   } catch (error) {
-    throw new DevLogError("Kimi API call failed", "API_ERROR", error);
+    throw new DevLogError('Kimi API call failed', 'API_ERROR', error);
   }
 }
 
