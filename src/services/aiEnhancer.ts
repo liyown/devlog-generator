@@ -125,8 +125,6 @@ async function enhanceWithGemini(
     throw new DevLogError('Gemini API key not configured', 'MISSING_API_KEY');
   }
 
-  console.log('当前组的日志：', logs);
-
   // Mock implementation that returns enhanced logs
   const enhancedLogs = logs
     .split('\n')
@@ -152,9 +150,6 @@ async function enhanceWithGemini(
       return line;
     })
     .join('\n');
-
-  console.log('增强后的日志：', enhancedLogs);
-
   return enhancedLogs;
 }
 

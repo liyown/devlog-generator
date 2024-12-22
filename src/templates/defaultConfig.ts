@@ -2,7 +2,7 @@ import { Config } from '../types';
 
 export const defaultConfig: Config = {
   useAI: false,
-  aiInterface: 'openai',
+  aiInterface: 'gemini',
   openai: {
     apiKey: '',
     model: 'gpt-3.5-turbo',
@@ -14,7 +14,7 @@ export const defaultConfig: Config = {
   },
   gemini: {
     apiKey: '',
-    model: 'gemini-pro',
+    model: 'gemini-1.5-flash',
   },
   kimi: {
     apiKey: '',
@@ -23,9 +23,10 @@ export const defaultConfig: Config = {
   logFormat: 'html',
   gitLogOptions: {
     maxCommits: 50,
-    includeTags: false,
-    groupSize: 0,
+    groupSize: 5,
     groupByTag: false,
+    from: undefined,
+    to: undefined,
   },
   outputDirectory: './public',
 };

@@ -1,4 +1,4 @@
-import { GenerateOptions } from '../types';
+import { Config, GitCommit } from '../types';
 import { loadConfig } from '../utils/config';
 import { getGitLogs } from '../utils/git';
 import { generateLogs } from '../services/logGenerator';
@@ -9,40 +9,20 @@ import ora from 'ora';
 import chalk from 'chalk';
 import { groupCommits } from '../utils/groupCommits';
 
-export async function generate(options: GenerateOptions): Promise<void> {
+export async function generate(): Promise<void> {
   const spinner = ora('Loading configuration...').start();
   const monitor = new PerformanceMonitor(0);
 
   try {
-    const config = loadConfig();
-    const finalOptions = {
-      format: options.format ?? config.logFormat,
-      outputDir: options.outputDir ?? config.outputDirectory,
-      maxCommits:
-        options.maxCommits !== undefined
-          ? Number(options.maxCommits)
-          : config.gitLogOptions.maxCommits,
-      includeTags: options.includeTags ?? config.gitLogOptions.includeTags,
-      useAI: config.useAI,
-      aiInterface: config.aiInterface,
-      aiConfig: config[config.aiInterface],
-      groupSize: options.groupSize ?? config.gitLogOptions.groupSize,
-      groupByTag: options.groupByTag ?? config.gitLogOptions.groupByTag,
-    };
-
-    console.log('Using configuration:', {
-      ...finalOptions,
-      aiConfig: finalOptions.aiConfig
-        ? { ...finalOptions.aiConfig, apiKey: '***' }
-        : undefined,
-    });
+    const finalOptions = loadConfig();
 
     spinner.text = 'Reading Git commit history...';
 
     // 获取提交历史
     const commits = await getGitLogs({
-      maxCommits: finalOptions.maxCommits,
-      includeTags: finalOptions.includeTags || finalOptions.groupByTag,
+      maxCommits: finalOptions.gitLogOptions.maxCommits,
+      from: finalOptions.gitLogOptions.from,
+      to: finalOptions.gitLogOptions.to,
     });
 
     monitor.setTotalCommits(commits.length);
@@ -50,14 +30,17 @@ export async function generate(options: GenerateOptions): Promise<void> {
     // 先分组
     const allGroups = groupCommits(
       commits,
-      finalOptions.groupSize,
-      finalOptions.groupByTag
+      finalOptions.gitLogOptions.groupSize,
+      finalOptions.gitLogOptions.groupByTag
     );
 
     // 然后截取需要的组数
     const commitGroups = allGroups.slice(
       0,
-      Math.ceil(finalOptions.maxCommits / finalOptions.groupSize)
+      Math.ceil(
+        finalOptions.gitLogOptions.maxCommits /
+          finalOptions.gitLogOptions.groupSize
+      )
     );
 
     spinner.text = 'Generating and enhancing logs...';
@@ -78,7 +61,7 @@ export async function generate(options: GenerateOptions): Promise<void> {
             spinner.text = `Enhancing group ${index + 1}/${totalGroups} with AI...`;
             const startTime = Date.now();
             try {
-              groupLog = await enhanceWithAI(groupLog, config);
+              groupLog = await enhanceWithAI(groupLog, finalOptions);
               monitor.recordAICall(Date.now() - startTime);
             } catch (error) {
               console.warn(
@@ -91,10 +74,10 @@ export async function generate(options: GenerateOptions): Promise<void> {
           }
 
           // 将增强后的日志转换为目标格式
-          spinner.text = `Converting group ${index + 1}/${totalGroups} to ${finalOptions.format} format...`;
+          spinner.text = `Converting group ${index + 1}/${totalGroups} to ${finalOptions.logFormat} format...`;
           const formattedLog = await generateLogs(
             group,
-            finalOptions.format,
+            finalOptions.logFormat,
             groupLog
           );
 
@@ -117,7 +100,7 @@ export async function generate(options: GenerateOptions): Promise<void> {
 
     // 根据不同格式生成最终日志
     let logs = '';
-    if (finalOptions.format === 'html') {
+    if (finalOptions.logFormat === 'html') {
       // HTML 格式需要特殊处理
       const blocks = successfulGroups
         .map(({ formattedLog }) => formattedLog)
@@ -309,6 +292,13 @@ export async function generate(options: GenerateOptions): Promise<void> {
       line-height: 1.5;
     }
 
+    .enhanced-log {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--hover-bg);
+      border-radius: var(--radius);
+    }
+
     .commit-tags {
       display: flex;
       align-items: center;
@@ -373,6 +363,19 @@ export async function generate(options: GenerateOptions): Promise<void> {
 </body>
 </html>
       `;
+    } else if (finalOptions.logFormat === 'json') {
+      // JSON 格式处理
+      logs = JSON.stringify(
+        successfulGroups
+          .map(({ formattedLog }) => JSON.parse(formattedLog))
+          .filter(log => log),
+        null,
+        2
+      );
+
+      if (!logs) {
+        throw new Error('Failed to generate any valid JSON logs');
+      }
     } else {
       // 其他格式处理
       logs = successfulGroups
@@ -390,8 +393,8 @@ export async function generate(options: GenerateOptions): Promise<void> {
     spinner.text = 'Saving logs...';
     const outputPath = await saveLog(
       logs,
-      finalOptions.format,
-      finalOptions.outputDir,
+      finalOptions.logFormat,
+      finalOptions.outputDirectory,
       'devlog'
     );
 

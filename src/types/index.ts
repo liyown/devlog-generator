@@ -1,12 +1,3 @@
-export interface GenerateOptions {
-  format: 'markdown' | 'json' | 'html';
-  outputDir: string;
-  maxCommits: string;
-  includeTags: boolean;
-  groupSize?: number;
-  groupByTag?: boolean;
-}
-
 export interface Config {
   useAI: boolean;
   aiInterface: 'openai' | 'claude' | 'gemini' | 'kimi';
@@ -28,7 +19,13 @@ export interface Config {
     model: string;
   };
   logFormat: 'markdown' | 'json' | 'html';
-  gitLogOptions: GitLogOptions;
+  gitLogOptions: {
+    maxCommits: number;
+    groupSize: number;
+    groupByTag: boolean;
+    from?: string;
+    to?: string;
+  };
   outputDirectory: string;
 }
 
@@ -44,21 +41,4 @@ export interface AIResponse {
   success: boolean;
   content: string;
   error?: string;
-}
-
-export interface GitLogOptions {
-  maxCommits: number;
-  includeTags: boolean;
-  groupSize: number;
-  groupByTag: boolean;
-}
-
-interface CacheEntry {
-  timestamp: number;
-  content: string;
-  hash: string;
-}
-
-interface CacheData {
-  [key: string]: CacheEntry;
 }

@@ -12,16 +12,6 @@ export function groupCommits(
     const sortedCommits = [...commits].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-
-    // 打印日志检查排序
-    console.log(
-      'Sorted commits:',
-      sortedCommits.map(c => ({
-        date: c.date,
-        message: c.message,
-      }))
-    );
-
     // 遍历提交，根据标签分组
     sortedCommits.forEach(commit => {
       if (commit.tags && commit.tags.length > 0) {
@@ -63,15 +53,6 @@ export function groupCommits(
         groups.push(group);
       }
     }
-
-    // 打印分组结果检查
-    console.log(
-      'Groups before reverse:',
-      groups.map(group => ({
-        size: group.length,
-        dates: group.map(c => c.date),
-      }))
-    );
 
     // 反转顺序，使最新的组在前面（用于显示）
     return groups.reverse();

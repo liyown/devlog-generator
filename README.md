@@ -1,32 +1,71 @@
 # devlog-generator
 
-- ![CI](https://github.com/yourusername/devlog-generator/workflows/CI/badge.svg)
-- ![npm](https://img.shields.io/npm/v/devlog-generator)
-- ![License](https://img.shields.io/npm/l/devlog-generator)
-- 一个自动生成开发日志的 NPM 工具，支持从 Git 提交记录生成日志，并可通过 AI 增强内容。
+<div align="center">
 
-## 特性
+[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)](https://github.com/liyown/devlog-generator)
+[![Node](https://img.shields.io/badge/node-%3E%3D16-brightgreen?style=flat-square)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-- 🚀 自动从 Git 提交记录生成开发日志
-- 🤖 支持多个 AI 服务（OpenAI、Claude、Gemini、Kimi）
-- 📝 多种输出格式（HTML、Markdown、JSON）
-- 🎨 可自定义日志风格
-- ⚙️ 灵活的配置管理
-- 💾 智能缓存机制
-- 🔄 批量生成支持
+[![Markdown](https://img.shields.io/badge/Markdown-000000?style=flat-square&logo=markdown&logoColor=white)](https://www.markdownguide.org/)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![JSON](https://img.shields.io/badge/JSON-000000?style=flat-square&logo=json&logoColor=white)](https://www.json.org/)
 
-## 安装
+<h3>🚀 将 Git 提交记录转化为优雅的开发日志，支持 AI 增强和多种输出格式</h3>
+
+[English](./README.en.md) | 简体中文
+
+</div>
+
+## 📖 简介
+
+`devlog-generator` 是一个强大的开发日志生成工具，它可以：
+
+- 🎯 自动分析 Git 提交记录，生成结构化的开发日志
+- 🤖 通过多个 AI 模型优化日志内容，使其更专业、更易读
+- 🎨 支持多种输出格式，满足不同场景需求
+- ⚡ 简单易用，一键生成，告别手写日志的烦恼
+
+## ✨ 特性
+
+- 🔄 **智能提交分析**
+  - 自动识别提交类型（feat/fix/docs等）
+  - 智能分组和归类
+  - 支持按时间/标签/版本分组
+- 🤖 **AI 增强**
+  - 支持多个主流 AI 服务
+    - OpenAI (GPT-3.5/4)
+    - Claude
+    - Gemini
+    - Kimi
+  - 智能优化描述内容
+  - 自动补充技术细节
+- 📝 **多格式输出**
+  - Markdown（适合文档和 Git 仓库）
+  - HTML（美观的网页展示）
+  - JSON（便于程序处理）
+- ⚙️ **高度可定制**
+  - 灵活的配置选项
+  - 自定义输出模板
+  - 支持输出样式定制
+
+## 🚀 快速开始
+
+### 安装
 
 ```bash
+# 使用 npm
 npm install -g devlog-generator
-# 或者
+
+# 使用 yarn
 yarn global add devlog-generator
 
-# 初始化配置（首次使用需要运行）
-devlog init
+# 使用 pnpm
+pnpm add -g devlog-generator
 ```
 
-## 快速开始
+### 基础使用
 
 1. 初始化配置：
 
@@ -40,7 +79,34 @@ devlog init
 devlog generate
 ```
 
-## 配置
+### 进阶使用
+
+```bash
+# 指定时间范围生成
+devlog generate --from 2024-01-01 --to 2024-01-31
+
+# 指定输出格式
+devlog generate --format html
+
+# 使用 AI 增强
+devlog generate --use-ai --ai-interface gemini
+
+# 自定义输出目录
+devlog generate --output-dir ./docs/changelog
+
+# 组合使用
+devlog generate --from 2024-01-01 --to 2024-01-31 --format html --output-dir ./docs/changelog
+```
+
+## 📝 输出示例
+
+支持三种格式输出，点击查看示例：
+
+- [📘 Markdown 格式](./public/devlog.markdown)
+- [🌐 HTML 格式](./public/devlog.html)
+- [📊 JSON 格式](./public/devlog.json)
+
+## ⚙️ 配置
 
 ### 配置文件
 
@@ -71,80 +137,18 @@ devlog generate
   "gitLogOptions": {
     "maxCommits": 50,
     "groupSize": 5,
-    "groupByTag": false
+    "groupByTag": false,
+    "includeTags": false,
+    "from": "2024-01-01",
+    "to": "2024-12-31"
   },
   "outputDirectory": "./public"
 }
 ```
 
-### 配置选项说明
-
-#### 基础配置
-
-- `useAI`: (boolean) 是否启用 AI 增强
-- `aiInterface`: ("openai" | "claude" | "gemini" | "kimi") AI 服务提供商
-- `logFormat`: ("markdown" | "json" | "html") 日志输出格式
-- `outputDirectory`: (string) 日志输出目录
-
-#### Git 配置
-
-- `gitLogOptions`:
-  - `maxCommits`: (number) 最大提交数量
-  - `groupSize`: (number) 分组大小，每组包含的分组单位
-  - `groupByTag`: (boolean) 是否按标签分组
-
-#### AI 服务配置
-
-支持的 AI 服务及其配置选项：
-
-##### OpenAI
-
-```json
-{
-  "openai": {
-    "apiKey": "",
-    "model": "gpt-3.5-turbo",
-    "stylePrompt": "Generate formal and technical logs"
-  }
-}
-```
-
-##### Claude
-
-```json
-{
-  "claude": {
-    "apiKey": "",
-    "model": "claude-3-opus-20240229"
-  }
-}
-```
-
-##### Gemini
-
-```json
-{
-  "gemini": {
-    "apiKey": "your-gemini-api-key",
-    "model": "gemini-1.5-flash"
-  }
-}
-```
-
-##### Kimi
-
-```json
-{
-  "kimi": {
-    "apiKey": "",
-    "model": "moonshot-v1-128k"
-  }
-}
-```
-
 ### 环境变量
 
-支持通过环境变量进行配置：
+也支持通过环境变量进行配置：
 
 ```env
 USE_AI=true
@@ -154,6 +158,17 @@ LOG_FORMAT=markdown
 OUTPUT_DIRECTORY=./public
 ```
 
-## License
+## 🤝 贡献
 
-MIT
+欢迎提交 PR 和 Issue！
+
+## 📄 许可证
+
+[MIT](./LICENSE)
+
+## 🙏 鸣谢
+
+- [OpenAI](https://openai.com/)
+- [Anthropic](https://www.anthropic.com/)
+- [Google](https://deepmind.google/)
+- [Moonshot AI](https://www.moonshot.cn/)
